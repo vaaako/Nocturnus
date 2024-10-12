@@ -1,55 +1,102 @@
 #include "nocturnus/roguelike.hpp"
-#include <cstring>
+#include <random>
 
-Roguelike::Roguelike(const Terminal& terminal, const uint32 width, const uint32 height)
-	: terminal(terminal), width(width), height(height),
-	  screen_buffer(std::vector<std::vector<char>>(height, std::vector<char>(width, ' '))),
-	  prev_buffer(std::vector<std::vector<char>>(height, std::vector<char>(width, ' '))) {
+Roguelike::Roguelike(Terminal* terminal)
+	: terminal(terminal) {
 
 }
 
+Room Roguelike::make_room(const uint16 x, const uint16 y, const uint16 width, const uint16 height) {
+	Room room = {
+		{ x, y },
+		width, height,
 
-void Roguelike::putchar(const uint32 x, const uint32 y, const char ch) {
-	if(this->inbounds(x, y)) {
-		this->screen_buffer[y][x] = ch; // This is line is causing lag on windows
+		// Doors
+		{
+			// Top door (random x within room's width, fixed y at the top of the room)
+			{ static_cast<uint16>((x + 1) + this->randint(width - 1)), y },
+
+			// Right door (fixed x at the right edge of the room, random y within room's height)
+			// x: width + 1 fit with the draw_room
+			{ static_cast<uint16>(x + width + 1), static_cast<uint16>((y + 1) + this->randint(height - 1)) },
+
+			// Bottom door (random x within room's width, fixed y at the bottom of the room)
+			// y: height + 1 fit with the draw_room
+			{ static_cast<uint16>((x + 1) + this->randint(width - 1)), static_cast<uint16>(y + height + 1) },
+
+			// Left door (fixed x at the left edge of the room, random y within room's height)
+			{ x, static_cast<uint16>((y + 1) + this->randint(height - 1)) }
+
+			// Not commented operations are for preventing doors for generating on the edges
+		}
+	};
+
+
+	this->rooms.push_back(room);
+	return room;
+}
+
+
+void connect_doors(const vec2<uint16>& door1, const vec2<uint16> door2) {
+
+}
+
+void Roguelike::draw_room(const Room& room) {
+	// +2 fit with the right wall
+	// +1 go one more to the right and make the inside the right size
+	for(int x = room.pos.x; x < (room.pos.x + room.width) + 2; x++) {
+		this->terminal->putchar(x, room.pos.y, '-'); // Top
+		this->terminal->putchar(x, (room.pos.y + room.height) + 1, '-'); // Bottom
 	}
-}
 
-char Roguelike::getchar(const uint32 x, const uint32 y) const {
-	if(this->inbounds(x, y)) {
-		return this->screen_buffer[y][x];
-	}
-	return '\0';
-}
+	// +1 start under the top wall
+	// +1 go one more below and make the inside the right size
+	// +1 properly fill
+	for(int y = room.pos.y + 1; y < (room.pos.y + room.height) + 1; y++) {
+		this->terminal->putchar(room.pos.x, y, '|'); // Left
+		this->terminal->putchar((room.pos.x + room.width) + 1, y, '|'); // Right
 
-void Roguelike::make_room(const uint32 xdest, const uint32 ydest, const uint32 width, const uint32 height, const char wall) {
-	for(uint32 y = ydest; y < height; y++) {
-		for(uint32 x = xdest; x < width; x++) {
-			if(x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-				this->putchar(x, y, wall);
-			}
+		// +1 start below the top wall
+		// +1 stop above the bottom wall
+		for(int x = room.pos.x + 1; x < (room.pos.x + room.width) + 1; x++) {
+			this->terminal->putchar(x, y, '.');
 		}
 	}
+
+	// Draw rooms
+	// Top
+	this->terminal->putchar(room.doors[0].x, room.doors[0].y, '+');
+	// Right
+	this->terminal->putchar(room.doors[1].x, room.doors[1].y, '+');
+	// Bottom
+	this->terminal->putchar(room.doors[2].x, room.doors[2].y, '+');
+	// Left
+	this->terminal->putchar(room.doors[3].x, room.doors[3].y, '+');
 }
 
-void Roguelike::render_map() {
-	for(uint32 y = 0; y != this->height; y++) {
-		for(uint32 x = 0; x != this->width; x++) {
 
-			// if(this->screen_buffer[y][x] == this->prev_buffer[y][x]) {
-			// 	continue;
-			// }
-			// this->terminal.move_cursor(x, y);
-			// std::cout << this->screen_buffer[y][x];
-
-			char ch = screen_buffer[y][x];
-			if(ch == ' ') {
-				continue;
-			}
-			this->terminal.putchar(x, y, ch);
-		}
+void Roguelike::draw_rooms() {
+	for(Room& room : this->rooms) {
+		this->draw_room(room);
 	}
 
-	std::cout.flush();
-	this->prev_buffer = this->screen_buffer;
+	// debug
+}
+
+
+
+int Roguelike::randint(const int min, const int max) {
+	if(min > max) {
+		return -1;
+	}
+
+	std::random_device rd;
+	std::mt19937 gen = std::mt19937(rd()); // Use seed to generate a number
+
+	std::uniform_int_distribution<> distrib(min, max);
+	return distrib(gen);
+}
+
+int Roguelike::randint(const int max) {
+	return this->randint(0, max);
 }

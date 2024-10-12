@@ -1,37 +1,13 @@
+#include "nocturnus/roguelike.hpp"
 #include "nocturnus/terminal.hpp"
 #include "player.hpp"
 
-void setup_map(Terminal& terminal) {
-	terminal.putchars(13, 13, "--------");
-	terminal.putchars(13, 14, "|......|");
-	terminal.putchars(13, 15, "|......|");
-	terminal.putchars(13, 16, "|.......");
-	terminal.putchars(13, 17, "|......|");
-	terminal.putchars(13, 18, "--------");
+void setup_map(Roguelike& rogue) {
+	rogue.make_room(13, 13, 6, 4);
+	rogue.make_room(40, 2, 6, 4);
+	rogue.make_room(40, 10, 10, 4);
 
-	// Path
-	terminal.putchars(21, 16, "..........");
-	terminal.putchar(30, 15, '.');
-	terminal.putchar(30, 14, '.');
-	terminal.putchar(30, 13, '.');
-	terminal.putchars(30, 12, "..........");
-
-	terminal.putchars(40, 2, "--------");
-	terminal.putchars(40, 3, "|......|");
-	terminal.putchars(40, 4, "|......|");
-	terminal.putchars(40, 5, "|......|");
-	terminal.putchars(40, 6, "|......|");
-	terminal.putchars(40, 7, "----.---");
-
-	terminal.putchar(44, 8, '.');
-	terminal.putchar(44, 9, '.');
-
-	terminal.putchars(40, 10, "----.-------");
-	terminal.putchars(40, 11, "|..........|");
-	terminal.putchars(40, 12, "...........|");
-	terminal.putchars(40, 13, "|..........|");
-	terminal.putchars(40, 14, "|..........|");
-	terminal.putchars(40, 15, "------------");
+	rogue.draw_rooms();
 }
 
 void update_term(Terminal& terminal) {
@@ -40,7 +16,6 @@ void update_term(Terminal& terminal) {
 
 	char ch;
 	while((ch = terminal.getkey()) != 'q') {
-
 		vec2<uint16> newpos = player.pos;
 		switch (ch) {
 			case 'w':
@@ -58,12 +33,13 @@ void update_term(Terminal& terminal) {
 		}
 
 
-		terminal.clear_line(0, 1);
 		terminal.putstring(0, 1, ("New pos char: " + std::string(1, terminal.mvinch(newpos.x, newpos.y))).c_str());
 
 		// Collision
 		switch (terminal.mvinch(newpos.x, newpos.y)) {
+			// Walkable, move
 			case '.':
+			case '#':
 				player.move(newpos);
 				break;
 
@@ -71,10 +47,7 @@ void update_term(Terminal& terminal) {
 			default:
 				break;
 		}
-		// player.move(newpos);
 
-		// TODO -- Unify both
-		terminal.clear_line(0, 0);
 		terminal.putstring(0, 0, ("X: " + std::to_string(player.pos.x) + " Y: " + std::to_string(player.pos.y)).c_str());
 
 		player.draw();
@@ -88,14 +61,18 @@ int main() {
 	terminal.hide_cursor();
 	terminal.disable_echoing();
 
+	Roguelike rogue = Roguelike(&terminal);
+
+	// terminal.waitkey(); // view compiling info
+
 	// Init
 	terminal.clear_screen();
 	terminal.putstring(0, 0, "Press any key to start");
-	terminal.putstring(0, 2, ("Width: " + std::to_string(terminal.term_col()) + " Height: " + std::to_string(terminal.term_row())).c_str());
-
+	// terminal.putstring(0, 2, ("Width: " + std::to_string(terminal.term_col()) + " Height: " + std::to_string(terminal.term_row())).c_str());
+	terminal.putstring(0, 2, (std::to_string(rogue.randint(10))).c_str());
 
 	// Draw
-	setup_map(terminal);
+	setup_map(rogue);
 	update_term(terminal);
 
 	// exit

@@ -4,45 +4,44 @@
 #include "nocturnus/typedef.hpp"
 #include <vector>
 
-// NOTE -- Terminal starts at 1, 1
+
+struct Room {
+	vec2<uint16> pos; // top-left position
+	uint16 width;
+	uint16 height;
+
+	// Maximum of 4 doors
+	// Default to fill later
+	vec2<uint16> doors[4];
+};
 
 class Roguelike {
 	public:
-		Roguelike(const Terminal& terminal, const uint32 width, const uint32 height);
+		Roguelike(Terminal* terminal);
 
-		// Check if coordinates are inside terminal bounds
-		inline bool inbounds(const uint32 x, const uint32 y) const {
-			return (x >= 0 && x < this->width && y >= 0 && y < this->height);
-		}
+		// Make a room in coords and put on a vector of rooms.
+		// The width and height of a room is the size of the interior, not counting the walls, so a room 5x5 counting with the walls is actually 7x7
+		Room make_room(const uint16 x, const uint16 y, const uint16 width, const uint16 height);
 
-		// Put char, used for interactable characters
-		void putchar(const uint32 x, const uint32 y, const char ch);
+		// Draw a room.
+		// Don't use this method with draw_rooms, to avoid drawing the same rooom twice
+		void draw_room(const Room& room);
 
-		// Get char in some location
-		char getchar(const uint32 x, const uint32 y) const;
+		// Draw all rooms created.
+		// Don't use this method with draw_room, to avoid drawing the same rooom twice
+		void draw_rooms();
 
-		// Make a room in X,Y with Width and Height of size
-		void make_room(const uint32 xdest, const uint32 ydest, const uint32 width, const uint32 height, const char wall);
+		// 
+		void connect_doors(const vec2<uint16>& door1, const vec2<uint16> door2);
 
-		void render_map();
+		// Generate a random integer between two numbers
+		int randint(const int min, const int max);
 
-		template <typename T>
-		// Check if vector is colliding with some character
-		bool willcollide(const vec2<T>& newpos, const char ch) const;
+		// Generate a random integer between 0 and a number
+		int randint(const int max);
 
 	private:
-		Terminal terminal;
-		const uint32 width;
-		const uint32 height;
-
-		// Keep track of chars in screen
-		// Fill with space
-		std::vector<std::vector<char>> screen_buffer;
-		std::vector<std::vector<char>> prev_buffer;
+		Terminal* terminal;
+		std::vector<Room> rooms;
 };
 
-
-template <typename T>
-bool Roguelike::willcollide(const vec2<T>& newpos, const char ch) const {
-	return this->getchar(newpos.x, newpos.y) == ch;
-}

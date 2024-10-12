@@ -155,7 +155,7 @@ void Terminal::clear_line(const uint16 x, const uint16 y) const {
 
 void Terminal::move_cursor(const uint16 x, const uint16 y) const {
 	if(!this->inbounds(x, y)) {
-
+		return;
 	}
 
 #ifdef _WIN32
@@ -263,9 +263,8 @@ uint8 Terminal::getkey() const {
 
 // Put a single char in some location
 void Terminal::putchar(const uint16 x, const uint16 y, const char ch) {
-	this->term_buffer[y][x] = ch; // Keep track of characters on screen
-
-	if(x < this->width && y < this->height) {
+	if(this->inbounds(x, y)) {
+		this->term_buffer[y][x] = ch; // Keep track of characters on screen
 		this->move_cursor(x, y);
 		std::cout << ch;
 	}
@@ -297,6 +296,7 @@ void Terminal::show_message(const uint16 x, const uint16 y, const char* message)
 // Put a string in some location
 void Terminal::putstring(const uint16 x, const uint16 y, const char* message) const {
 	this->move_cursor(x, y);
+	this->clear_line(x, y); // Clear whatever is in this line before
 	std::cout << message << std::flush;
 	// this->reset_color();
 }
