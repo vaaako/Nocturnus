@@ -2,6 +2,11 @@
 #include <csignal>
 #include <cstdio>
 
+struct Entity {
+	ANSIColor color;
+	vec2<uint16> pos;
+};
+
 struct Player {
 	vec2<uint16> pos = { 5, 5 };
 };
@@ -13,35 +18,22 @@ struct Enemy {
 Enemy enemy;
 
 void draw(Terminal& terminal, Roguelike& rogue, Player& player) {
-	terminal.clear_screen();
+	// terminal.clear_screen();
 
-	uint8 width = 20;
-	uint8 height = 10;
-	for(int x = 0; x < width; x++) {
-		for(int y = 0; y < height; y++) {
-			if(x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-				rogue.putchar(x, y, '#');
-			}
-		}
-	}
+	terminal.update_buffer();
+	rogue.render_map();
 
-	terminal.set_bold(ANSIColor::YELLOW);
-	terminal.putchar(player.pos.x, player.pos.y, 'C');
-
-	terminal.set_bold(ANSIColor::RED);
-	terminal.putchar(enemy.pos.x, enemy.pos.y, 'R');
-
-	if(enemy.pos.x > player.pos.x) {
-		enemy.pos.x -= 1;
-	} else {
-		enemy.pos.x += 1;
-	}
-
-	if(enemy.pos.y > player.pos.y) {
-		enemy.pos.y -= 1;
-	} else {
-		enemy.pos.y += 1;
-	}
+	// if(enemy.pos.x > player.pos.x) {
+	// 	enemy.pos.x -= 1;
+	// } else {
+	// 	enemy.pos.x += 1;
+	// }
+	//
+	// if(enemy.pos.y > player.pos.y) {
+	// 	enemy.pos.y -= 1;
+	// } else {
+	// 	enemy.pos.y += 1;
+	// }
 
 	terminal.putstring(0, 20, ("X: " + std::to_string(player.pos.x)  + " Y: " + std::to_string(player.pos.y)).c_str());
 	terminal.putstring(0, 21, ("Under character: '" + std::string(1, rogue.getchar(player.pos.x, player.pos.y)) + "'").c_str());
@@ -56,6 +48,7 @@ void draw(Terminal& terminal, Roguelike& rogue, Player& player) {
  * - Add real time turn (sleep on while loop end)
  * - Windows background
  * - Windows bold
+ * - Double buffer drawing
  * 
  * 
  * */
@@ -67,19 +60,27 @@ int main() {
 	terminal.hide_cursor();
 
 	// Roguelike related methods
-	Roguelike rogue = Roguelike(terminal, 50, 60); // Used for collision
+	Roguelike rogue = Roguelike(terminal, terminal.term_col(), terminal.term_row()); // Used for collision
+	rogue.make_room(18, 8, 20, 10, '#');
+
+	// std::vector<Entity> = {
+	// 	{ player.pos, ANSI }
+	// }
+
+	std::printf("width: %d height: %d", terminal.term_col(), terminal.term_row());
+	terminal.getkey();
 
 	Player player;
+	terminal.set_bold(ANSIColor::YELLOW);
+	terminal.putchar(player.pos.x, player.pos.y, 'C');
 
+	// terminal.set_bold(ANSIColor::RED);
+	// terminal.putchar(enemy.pos.x, enemy.pos.y, 'R');
 
-	vec2 termsize = terminal.term_col_row();
-	std::printf("Term size - rows: %d / columns: %d\n", termsize.x, termsize.y);
 
 	terminal.clear_screen();
-
 	terminal.set_color(ANSIColor::YELLOW);
-	terminal.putstring(0, 0, "Press any key to start...");
-
+	terminal.show_message(0, 0, "Press any key to start...");
 
 	char ch;
 	while((ch = terminal.getkey())) {
@@ -98,17 +99,22 @@ int main() {
 
 		// If not colliding with a wall
 		if(!rogue.willcollide(newpos, '#')) {
+			terminal.putchar(player.pos.x, player.pos.y, ' ');
 			player.pos = newpos;
 		}
+		terminal.set_color(ANSIColor::YELLOW);
+		terminal.putchar(newpos.x, newpos.y, '@');
 
 		// Debug warning
 		if(ch == 'e') {
 			terminal.show_warning("Testing warning");
+			rogue.render_map();
 		}
 
 		// Update screen
 		draw(terminal, rogue, player);
 	}
 }
+
 
 

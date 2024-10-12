@@ -1,5 +1,5 @@
 CXX = clang++
-CXXFLAGS = -std=c++20 -I./include -Wall -Wextra -MMD -MP
+CXXFLAGS = -std=c++20 -O3 -I./include -Wall -Wextra -MMD -MP
 
 BUILD_DIR = build
 OBJS_DIR = $(BUILD_DIR)/objs

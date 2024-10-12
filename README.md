@@ -30,7 +30,7 @@ void draw(const Terminal& terminal, const Roguelike& rogue, const Player& player
 	terminal.clear_screen();
 
 	// Make room with and set walls as '#'
-	roguelike.make_room(20, 10, '#');
+	roguelike.make_room(0, 0, 20, 10, '#');
 
 	// Draw player
 	terminal.set_bold(ANSIColor::YELLOW);

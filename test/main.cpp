@@ -1,104 +1,104 @@
 #include "nocturnus/terminal.hpp"
-#include "nocturnus/roguelike.hpp"
-#include "nocturnus/vectors/vec2.hpp"
-#include <csignal>
-#include <cstdio>
+#include "player.hpp"
 
-struct Player {
-	vec2<uint16> pos = { 5, 5 };
-};
+void setup_map(Terminal& terminal) {
+	terminal.putchars(13, 13, "--------");
+	terminal.putchars(13, 14, "|......|");
+	terminal.putchars(13, 15, "|......|");
+	terminal.putchars(13, 16, "|.......");
+	terminal.putchars(13, 17, "|......|");
+	terminal.putchars(13, 18, "--------");
 
-struct Enemy {
-	vec2<uint16> pos = { 16, 1 };
-};
+	// Path
+	terminal.putchars(21, 16, "..........");
+	terminal.putchar(30, 15, '.');
+	terminal.putchar(30, 14, '.');
+	terminal.putchar(30, 13, '.');
+	terminal.putchars(30, 12, "..........");
 
-Enemy enemy;
+	terminal.putchars(40, 2, "--------");
+	terminal.putchars(40, 3, "|......|");
+	terminal.putchars(40, 4, "|......|");
+	terminal.putchars(40, 5, "|......|");
+	terminal.putchars(40, 6, "|......|");
+	terminal.putchars(40, 7, "----.---");
 
-void draw(Terminal& terminal, Roguelike& rogue, Player& player) {
-	terminal.clear_screen();
+	terminal.putchar(44, 8, '.');
+	terminal.putchar(44, 9, '.');
 
-	uint8 width = 20;
-	uint8 height = 10;
-	for(int x = 0; x < width; x++) {
-		for(int y = 0; y < height; y++) {
-			if(x == 0 || x == width - 1 || y == 0 || y == height - 1) {
-				rogue.putchar(x, y, '#');
-			}
+	terminal.putchars(40, 10, "----.-------");
+	terminal.putchars(40, 11, "|..........|");
+	terminal.putchars(40, 12, "...........|");
+	terminal.putchars(40, 13, "|..........|");
+	terminal.putchars(40, 14, "|..........|");
+	terminal.putchars(40, 15, "------------");
+}
+
+void update_term(Terminal& terminal) {
+	// Put on roguelike module
+	Player player = Player(terminal, { 14, 14 });
+
+	char ch;
+	while((ch = terminal.getkey()) != 'q') {
+
+		vec2<uint16> newpos = player.pos;
+		switch (ch) {
+			case 'w':
+				newpos.y -= 1;
+				break;
+			case 'a':
+				newpos.x -= 1;
+				break;
+			case 's':
+				newpos.y += 1;
+				break;
+			case 'd':
+				newpos.x += 1;
+				break;
 		}
+
+
+		terminal.clear_line(0, 1);
+		terminal.putstring(0, 1, ("New pos char: " + std::string(1, terminal.mvinch(newpos.x, newpos.y))).c_str());
+
+		// Collision
+		switch (terminal.mvinch(newpos.x, newpos.y)) {
+			case '.':
+				player.move(newpos);
+				break;
+
+			// Don't move if is not walkable
+			default:
+				break;
+		}
+		// player.move(newpos);
+
+		// TODO -- Unify both
+		terminal.clear_line(0, 0);
+		terminal.putstring(0, 0, ("X: " + std::to_string(player.pos.x) + " Y: " + std::to_string(player.pos.y)).c_str());
+
+		player.draw();
 	}
-
-	terminal.set_bold(ANSIColor::YELLOW);
-	terminal.putchar(player.pos.x, player.pos.y, 'C');
-
-	terminal.set_bold(ANSIColor::RED);
-	terminal.putchar(enemy.pos.x, enemy.pos.y, 'R');
-
-	if(enemy.pos.x > player.pos.x) {
-		enemy.pos.x -= 1;
-	} else {
-		enemy.pos.x += 1;
-	}
-
-	if(enemy.pos.y > player.pos.y) {
-		enemy.pos.y -= 1;
-	} else {
-		enemy.pos.y += 1;
-	}
-
-	terminal.putstring(0, 20, ("X: " + std::to_string(player.pos.x)  + " Y: " + std::to_string(player.pos.y)).c_str());
-	terminal.putstring(0, 21, ("Under character: '" + std::string(1, rogue.getchar(player.pos.x, player.pos.y)) + "'").c_str());
 }
 
 
 int main() {
-	// Terminal realted methods
-	Terminal terminal = Terminal(); // In this case used as the underlayer
+	// Setup
+	Terminal terminal = Terminal();
+	terminal.hide_cursor();
+	terminal.disable_echoing();
 
-	// Roguelike related methods
-	Roguelike rogue = Roguelike(terminal, 50, 60); // Used for collision
-
-	Player player;
-
-
-	vec2 termsize = terminal.term_col_row();
-	std::printf("Term size - rows: %d / columns: %d\n", termsize.x, termsize.y);
-
+	// Init
 	terminal.clear_screen();
+	terminal.putstring(0, 0, "Press any key to start");
+	terminal.putstring(0, 2, ("Width: " + std::to_string(terminal.term_col()) + " Height: " + std::to_string(terminal.term_row())).c_str());
 
-	terminal.set_color(ANSIColor::YELLOW);
-	terminal.show_message(0, 0, "Press any key to start...");
 
-	// Initial draw
-	draw(terminal, rogue, player);
+	// Draw
+	setup_map(terminal);
+	update_term(terminal);
 
-	char ch;
-	while((ch = terminal.getkey())) {
-		vec2<uint16> newpos = player.pos;
-		if(ch == 'w') {
-			newpos.y -= 1;
-		} else if(ch == 's') {
-			newpos.y += 1;
-		}
-
-		if(ch == 'a') {
-			newpos.x -= 1;
-		} else if(ch == 'd') {
-			newpos.x += 1;
-		}
-
-		// If not colliding with a wall
-		if(!rogue.willcollide(newpos, '#')) {
-			player.pos = newpos;
-		}
-
-		// Debug warning
-		if(ch == 'e') {
-			terminal.show_warning("Testing warning");
-		}
-
-		// Update if pressed key
-		draw(terminal, rogue, player);
-	}
+	// exit
+	terminal.show_cursor();
+	terminal.disable_echoing(false);
 }
-
-
