@@ -7,7 +7,7 @@
 #endif
 
 Terminal::Terminal(const char* title) : width(this->term_col()), height(this->term_row()) {
-	this->term_buffer = std::vector<std::vector<char>>(this->height, std::vector<char>(this->width, '\0'));
+	this->term_buffer = std::vector<std::vector<char>>(this->height, std::vector<char>(this->width, ' '));
 	this->set_title(title);
 }
 

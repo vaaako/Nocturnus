@@ -3,9 +3,9 @@
 #include "player.hpp"
 
 void setup_map(Roguelike& rogue) {
-	rogue.make_room(13, 13, 6, 4);
-	rogue.make_room(40, 2, 6, 4);
+	// rogue.make_room(13, 13, 6, 4);
 	rogue.make_room(40, 10, 10, 4);
+	rogue.make_room(40, 2, 6, 4);
 
 	rogue.draw_rooms();
 }
@@ -40,6 +40,7 @@ void update_term(Terminal& terminal) {
 			// Walkable, move
 			case '.':
 			case '#':
+			case '+':
 				player.move(newpos);
 				break;
 
@@ -69,7 +70,10 @@ int main() {
 	terminal.clear_screen();
 	terminal.putstring(0, 0, "Press any key to start");
 	// terminal.putstring(0, 2, ("Width: " + std::to_string(terminal.term_col()) + " Height: " + std::to_string(terminal.term_row())).c_str());
-	terminal.putstring(0, 2, (std::to_string(rogue.randint(10))).c_str());
+
+	// Debug
+	Room room1 = rogue.make_room(13, 13, 6, 4);
+	terminal.putstring(0, 2, ("Door1 X: " + std::to_string(room1.doors[1].x) + ", Y: " + std::to_string(room1.doors[1].y)).c_str());
 
 	// Draw
 	setup_map(rogue);

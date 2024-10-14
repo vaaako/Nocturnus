@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <utility>
 
 template <typename T>
@@ -12,7 +13,7 @@ struct vec2 {
 	vec2(const vec2& other) = default;
 	vec2(vec2&& other) = default;
 
-	vec2<T>& operator+(const vec2<T>& other) noexcept {
+	vec2<T>& operator+(const vec2<T>& other) const noexcept {
 		return { this->x + other.x, this->y + other.y };
 	}
 
@@ -20,6 +21,19 @@ struct vec2 {
 		this->x += other.x;
 		this->y += other.y;
 		return { this->x + other.x, this->y + other.y };
+	}
+
+	bool operator==(const vec2<T>& other) const noexcept {
+		return (this->x == other.x) && (this->y == other.y);
+	}
+
+	bool operator!=(const vec2<T>& other) const noexcept {
+		return !(*this == other);
+	}
+
+
+	bool operator<(const vec2& other) const {
+		return std::tie(x, y) < std::tie(other.x, other.y);
 	}
 
 	vec2<T>& operator=(const vec2<T>& other) noexcept {
@@ -40,8 +54,8 @@ struct vec2 {
 		if (this != &other) {
 			this->x = std::move(other.x);
 			this->y = std::move(other.y);
-			other.clear();
 		}
 		return *this;
 	}
 };
+

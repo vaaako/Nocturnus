@@ -4,6 +4,17 @@
 #include "nocturnus/typedef.hpp"
 #include <vector>
 
+enum Block : uint8 {
+	EMPTY = ' ',
+	PLAYER = '@',
+
+	LRWALL = '|', // Left right wall
+	TBWALL = '-', // Top bottom wall
+
+	FLOOR = '.',
+	DOOR  = '+',
+	PATH  = '#'
+};
 
 struct Room {
 	vec2<uint16> pos; // top-left position
@@ -14,6 +25,11 @@ struct Room {
 	// Default to fill later
 	vec2<uint16> doors[4];
 };
+
+// Instead of one class for roguelike, make some namespaces
+// namespace pathfind {
+//
+// };
 
 class Roguelike {
 	public:
@@ -31,14 +47,18 @@ class Roguelike {
 		// Don't use this method with draw_room, to avoid drawing the same rooom twice
 		void draw_rooms();
 
-		// 
-		void connect_doors(const vec2<uint16>& door1, const vec2<uint16> door2);
+		// Try to make a path between two locations
+		void make_path(const vec2<uint16>& start, const vec2<uint16>& target) const;
+		bool make_path_recursive(const vec2<uint16>& pathpos, const vec2<uint16>& target) const;
 
 		// Generate a random integer between two numbers
 		int randint(const int min, const int max);
 
 		// Generate a random integer between 0 and a number
 		int randint(const int max);
+
+		void create_h_tunnel(int x1, int x2, int y);
+		void create_v_tunnel(int y1, int y2, int x);
 
 	private:
 		Terminal* terminal;
