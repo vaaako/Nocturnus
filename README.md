@@ -3,6 +3,8 @@ Inspited by the early versions of [libtcod](https://github.com/libtcod/libtcod),
 
 In conjuction with this library, I am also developing a "plugin" for Terminal-based Roguelike development. Inspired by [Nethack](https://nethackwiki.com/wiki/Main_Page) and [Rogue](https://en.wikipedia.org/wiki/Rogue_(video_game)). This combination aims to provide a toolkit for Roguelike development
 
+![showcase](medias/image.png)
+
 # Compiling
 ## Linux
 You can compile to a static library to use on your own project by running the following command:
@@ -18,74 +20,104 @@ make dev
 ## Windows or To Windows
 For compiling to windows, you need to specify what compiler you want to use. This is an example of compiling to Windows from Linux using **Mingw**
 ```sh
-make win CXX=i686-w64-mingw32-g+
+make win CXX=i686-w64-mingw32-g++
 ```
+
+This will also create a static library for Windows
 
 
 # Basic usage example
 ```cpp
 #include <nocturnus/roguelike.hpp>
 
-void draw(const Terminal& terminal, const Roguelike& rogue, const Player& player) {
-	terminal.clear_screen();
+struct Player {
+	Player(Terminal& terminal, const vec2<uint16>& pos);
+	vec2<uint16> pos;
 
-	// Make room with and set walls as '#'
-	roguelike.make_room(0, 0, 20, 10, '#');
+	inline void draw() {
+		this->terminal.putchar(this->pos.x, this->pos.y, '@');
+	}
 
-	// Draw player
-	terminal.set_bold(ANSIColor::YELLOW);
-	terminal.putchar(player.pos.x, player.pos.y, 'C'); // Using Terminal putchar because player is not part of the map
-	// NOTE -- Any item or enemy, or interactive character is part of the map, so putchar from Roguelike must be used
+	inline void move(const vec2<uint16>& newpos, const char footprint = '.') {
+		this->terminal.putchar(this->pos.x, this->pos.y, footprint);
+		this->pos = newpos;
+		this->terminal.putchar(this->pos.x, this->pos.y, '@');
+	}
 
-	// Debug player position
-	terminal.putstring(0, 20, ("X: " + std::to_string(player.pos.x)  + " Y: " + std::to_string(player.pos.y)).c_str());
+	private:
+		Terminal& terminal;
+};
+
+void setup_map(Roguelike& rogue) {
+	rogue.make_room(13, 13, 6, 4);
+	rogue.make_room(40, 10, 10, 4);
+	rogue.make_room(40, 2, 6, 4);
+
+	rogue.draw_rooms();
+}
+
+void update_term(Terminal& terminal) {
+	// Create player
+	Player player = Player(terminal, { 14, 14 });
+
+	// Main loop
+	char ch;
+	while((ch = terminal.getkey()) != 'q') {
+		vec2<uint16> newpos = player.pos;
+		switch (ch) {
+			case 'w':
+				newpos.y -= 1;
+				break;
+			case 'a':
+				newpos.x -= 1;
+				break;
+			case 's':
+				newpos.y += 1;
+				break;
+			case 'd':
+				newpos.x += 1;
+				break;
+		}
+
+		// Collision
+		switch (terminal.mvinch(newpos.x, newpos.y)) {
+			// Walkable, move
+			case '.':
+			case '#':
+			case '+':
+				player.move(newpos);
+				break;
+
+			// Don't move if is not walkable
+			default:
+				break;
+		}
+
+		player.draw();
+	}
 }
 
 int main() {
-	// Terminal realted methods
-	Terminal terminal = Terminal(); // In this case used as the underlayer
+	// Setup
+	Terminal terminal = Terminal();
 	terminal.hide_cursor();
+	terminal.disable_echoing();
 
-	// Roguelike related methods
-	Roguelike rogue = Roguelike(terminal, 50, 60); // Used for collision and other related methods
+	// Config roguelike class
+	Roguelike rogue = Roguelike(&terminal);
 
-	// Player object
-	Player player;
+	// terminal.waitkey(); // view compiling info
 
+	// Init
 	terminal.clear_screen();
-	terminal.set_color(ANSIColor::YELLOW);
-	terminal.putstring(0, 0, "Press any key to start..."); // Show a message without waiting for a key
-	// terminal.show_message(x, y, message); // Show a message and waits for a key
+	terminal.putstring(0, 0, "Press any key to start");
 
-	// Will only update if any key was pressed
-	char ch;
-	while((ch = terminal.getkey())) {
-		// Track new collision
-		vec2<uint16> newpos = player.pos;
+	// Draw
+	setup_map(rogue);
+	update_term(terminal);
 
-		if(ch == 'w') {
-			newpos.y -= 1;
-		} else if(ch == 's') {
-			newpos.y += 1;
-		}
-
-		if(ch == 'a') {
-			newpos.x -= 1;
-		} else if(ch == 'd') {
-			newpos.x += 1;
-		}
-
-		// If next movement will not collide, update position
-		if(!rogue.willcollide(newpos, '#')) {
-			player.pos = newpos;
-		}
-
-		// Debug warning
-		if(ch == 'e') {
-			terminal.show_warning("Testing warning");
-		}
-
-		// Update screen
-		draw(terminal, rogue, player);
-	}
+	// exit
+	terminal.show_cursor();
+	terminal.disable_echoing(false);
+}
 ```

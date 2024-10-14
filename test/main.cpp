@@ -3,7 +3,7 @@
 #include "player.hpp"
 
 void setup_map(Roguelike& rogue) {
-	// rogue.make_room(13, 13, 6, 4);
+	rogue.make_room(13, 13, 6, 4);
 	rogue.make_room(40, 10, 10, 4);
 	rogue.make_room(40, 2, 6, 4);
 
@@ -11,7 +11,7 @@ void setup_map(Roguelike& rogue) {
 }
 
 void update_term(Terminal& terminal) {
-	// Put on roguelike module
+	// Create player
 	Player player = Player(terminal, { 14, 14 });
 
 	char ch;
@@ -33,7 +33,7 @@ void update_term(Terminal& terminal) {
 		}
 
 
-		terminal.putstring(0, 1, ("New pos char: " + std::string(1, terminal.mvinch(newpos.x, newpos.y))).c_str());
+		// terminal.putstring(0, 1, ("New pos char: " + std::string(1, terminal.mvinch(newpos.x, newpos.y))).c_str());
 
 		// Collision
 		switch (terminal.mvinch(newpos.x, newpos.y)) {
@@ -69,11 +69,6 @@ int main() {
 	// Init
 	terminal.clear_screen();
 	terminal.putstring(0, 0, "Press any key to start");
-	// terminal.putstring(0, 2, ("Width: " + std::to_string(terminal.term_col()) + " Height: " + std::to_string(terminal.term_row())).c_str());
-
-	// Debug
-	Room room1 = rogue.make_room(13, 13, 6, 4);
-	terminal.putstring(0, 2, ("Door1 X: " + std::to_string(room1.doors[1].x) + ", Y: " + std::to_string(room1.doors[1].y)).c_str());
 
 	// Draw
 	setup_map(rogue);

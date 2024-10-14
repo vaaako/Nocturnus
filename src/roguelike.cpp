@@ -71,7 +71,7 @@ void Roguelike::draw_room(const Room& room) {
 	// Right
 	this->terminal->putchar(room.doors[1].x, room.doors[1].y, '+');
 	// Bottom
-	// this->terminal->putchar(room.doors[2].x, room.doors[2].y, '+');
+	this->terminal->putchar(room.doors[2].x, room.doors[2].y, '+');
 	// Left
 	this->terminal->putchar(room.doors[3].x, room.doors[3].y, '+');
 }
