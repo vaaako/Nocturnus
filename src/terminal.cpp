@@ -7,10 +7,13 @@
 #endif
 
 Terminal::Terminal(const char* title) : width(this->term_col()), height(this->term_row()) {
-	this->term_buffer = std::vector<std::vector<char>>(this->height, std::vector<char>(this->width, ' '));
+	this->buffer = new uint8[this->width * this->height];
 	this->set_title(title);
 }
 
+Terminal::~Terminal() {
+	delete this->buffer;
+}
 
 // META
 
@@ -227,17 +230,8 @@ void Terminal::waitkey() const {
 #ifdef _WIN32
 	_getch(); // Read character without echoing
 #else
-	// For Linux, termios can be used
-	// static struct termios oldt, newt;
-	// tcgetattr(STDIN_FILENO, &oldt); // Save old terminal
-	// newt = oldt;
-	// newt.c_lflag &= ~(ICANON | ECHO); // Disable canonical mode and echo
-	// tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-
+	// Assuming echoing is disabled
 	getchar();
-
-	// Restore old terminal settings
-	// tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 #endif
 }
 
@@ -245,17 +239,8 @@ uint8 Terminal::getkey() const {
 #ifdef _WIN32
 	return _getch(); // Read character without echoing
 #else
-	// For Linux, termios can be used
-	// static struct termios oldt, newt;
-	// tcgetattr(STDIN_FILENO, &oldt); // Save old terminal
-	// newt = oldt;
-	// newt.c_lflag &= ~(ICANON | ECHO); // Disable canonical mode and echo
-	// tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-
+	// Assuming echoing is disabled
 	uint8 ch = getchar();
-
-	// Restore old terminal settings
-	// tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 	return ch;
 #endif
 }
@@ -264,7 +249,7 @@ uint8 Terminal::getkey() const {
 // Put a single char in some location
 void Terminal::putchar(const uint16 x, const uint16 y, const char ch) {
 	if(this->inbounds(x, y)) {
-		this->term_buffer[y][x] = ch; // Keep track of characters on screen
+		this->buffer[x+y*this->width] = ch;
 		this->move_cursor(x, y);
 		std::cout << ch;
 	}
@@ -281,7 +266,7 @@ void Terminal::putchars(const uint16 x, const uint16 y, const char* chars) {
 }
 
 char Terminal::mvinch(const uint16 x, const uint16 y) const {
-	return this->term_buffer[y][x];
+	return this->buffer[x + y * this->width];
 }
 
 
@@ -306,28 +291,17 @@ void Terminal::show_warning(const std::string& message) const {
 #ifdef _WIN32
 	this->putstring(0, 0, (message + " --MORE--").c_str());
 
-	while (_getch() != ' ') {
+	while(_getch() != ' ') {
 		// loop until space is pressed
 	}
 #else
-	// For Linux, termios can be used
-	// static struct termios oldt, newt;
-	// tcgetattr(STDIN_FILENO, &oldt); // Save old terminal
-	// newt = oldt;
-	// newt.c_lflag &= ~(ICANON | ECHO); // Disable canonical mode and echo
-	// tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-
+	// Assuming echoing is disabled
 	this->putstring(0, 0, (message + " --MORE--").c_str());
 
 	char ch;
 	do {
 		ch = getchar();
-	} while (ch != ' '); // Wait until press space
-
-	// // Flush to prevent extra new line
-	// tcflush(STDIN_FILENO, TCIFLUSH);
-	// // Restore old terminal
-	// tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	} while (ch != ' '); // Wait until space is pressed
 #endif
 
 	// Hide warning

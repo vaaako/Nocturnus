@@ -1,11 +1,9 @@
-#include "nocturnus/roguelike.hpp"
+#include "nocturnus/roguelike/roguelike.hpp"
+#include "nocturnus/typedef.hpp"
 #include <algorithm>
+#include <array>
 #include <cstdlib>
-#include <queue>
 #include <random>
-#include <set>
-#include <stack>
-#include <unordered_set>
 
 Roguelike::Roguelike(Terminal* terminal)
 	: terminal(terminal) {
@@ -99,8 +97,10 @@ void Roguelike::draw_rooms() {
 	door2.x -= 1;
 	door3.y -= 1;
 	door4.x += 1;
+
 	this->make_path(door1, door2);
 	this->make_path(door3, door4);
+
 
 	// Could randomly choose which orientation to start
 	// this->make_h_path(door1.x, door2.x, door1.y);
@@ -123,10 +123,10 @@ void Roguelike::make_path(const vec2<uint16>& start, const vec2<uint16>& target,
 	// Directions (dx, dy)
 	std::array<vec2<int16>, 4> directions = {
 		// Path priority
-		vec2<int16>{ -1,  0 }, // Left
-		vec2<int16>{  1,  0 }, // Right
-		vec2<int16>{  0, -1 }, // Up
-		vec2<int16>{  0,  1 }  // Down
+		vec2<int16>(-1,  0 ), // Left
+		vec2<int16>( 1,  0 ), // Right
+		vec2<int16>( 0, -1 ), // Up
+		vec2<int16>( 0,  1 )  // Down
 	};
 
 	// Randomize the direction priority
@@ -149,7 +149,7 @@ void Roguelike::make_path(const vec2<uint16>& start, const vec2<uint16>& target,
 			};
 
 			// Check if newpos is an empty space
-			if(this->terminal->mvinch(newpos.x, newpos.y) != ' ') {
+			if(this->terminal->mvinch(newpos.x, newpos.y) != '\0') {
 				continue;
 			}
 
@@ -182,7 +182,7 @@ void Roguelike::make_path(const vec2<uint16>& start, const vec2<uint16>& target,
 
 		// Draw the path
 		this->terminal->putchar(pathpos.x, pathpos.y, pathchar);
-		// this->terminal->waitkey(); // DEBUG
+		this->terminal->waitkey(); // DEBUG
 	}
 
 	// Reached target or no possible directions

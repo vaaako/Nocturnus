@@ -1,6 +1,15 @@
-#include "nocturnus/roguelike.hpp"
+#include "nocturnus/roguelike/roguelike.hpp"
 #include "nocturnus/terminal.hpp"
 #include "player.hpp"
+
+// TODO 
+// - Remove buffer from terminal and put on roguelike class
+//    + Maybe make optional
+// - Get char will only be possible with roguelike class
+// - So a map and engine struct would be much easier
+// - Remove all methods from a class in terminal
+//    + So passing as reference wouldn't be needed
+//    + Make header only
 
 void setup_map(Roguelike& rogue) {
 	rogue.make_room(13, 13, 6, 4);

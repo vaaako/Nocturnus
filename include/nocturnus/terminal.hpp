@@ -1,8 +1,6 @@
 #pragma once
 
 #include "nocturnus/typedef.hpp"
-#include "nocturnus/vectors/vec2.hpp"
-#include <functional>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -110,111 +108,126 @@
 // underline \033[4;COLORm
 
 
-struct Terminal {
-	uint16 width;
-	uint16 height;
+class Terminal {
+	public:
+		Terminal(const char* title = "Terminal");
+		~Terminal();
 
-	Terminal(const char* title = "Terminal");
+		// GETTERS AND SETTERS //
 
-	// SETTERS //
+		inline uint16 get_width() const {
+			return this->width;
+		}
 
-	// Changes the terminal title
-	inline void set_title(const char* title) const {
-	#ifdef _WIN32
-		SetConsoleTitleA(title);
-	#else
-		std::cout << "\033]0;" << title << "\007" << std::flush;
-	#endif
-	}
+		inline uint16 get_height() const {
+			return this->height;
+		}
 
-	inline void set_width(const uint16 width) {
-		this->width = width;
-	}
+		inline uint8* get_buffer() const {
+			return this->buffer;
+		}
 
-	inline void set_height(const uint16 height) {
-		this->height = height;
-	}
+		// Changes the terminal title
+		inline void set_title(const char* title) const {
+		#ifdef _WIN32
+			SetConsoleTitleA(title);
+		#else
+			std::cout << "\033]0;" << title << "\007" << std::flush;
+		#endif
+		}
 
-	// META //
+		inline void set_width(const uint16 width) {
+			this->width = width;
+		}
 
-	// Get terminal width
-	uint16 term_col() const;
+		inline void set_height(const uint16 height) {
+			this->height = height;
+		}
 
-	// Get terminal height
-	uint16 term_row() const;
+		
 
-	inline bool inbounds(const uint16 x, const uint16 y) const {
-		return (x < this->width && y < this->height);
-	}
+		// META //
 
-	// Disable echoing the key pressed
-	void disable_echoing(const bool enable = true) const;
+		// Get terminal width
+		uint16 term_col() const;
 
-	// Hide cursor for being draw
-	void hide_cursor() const;
+		// Get terminal height
+		uint16 term_row() const;
 
-	// Show cursor
-	void show_cursor() const;
+		inline bool inbounds(const uint16 x, const uint16 y) const {
+			return (x < this->width && y < this->height);
+		}
 
-	// Move cursor to some location on terminal.
-	// This is used before drawing something on a location
-	void move_cursor(const uint16 x, const uint16 y) const;
+		// Disable echoing the key pressed
+		void disable_echoing(const bool enable = true) const;
 
+		// Hide cursor for being draw
+		void hide_cursor() const;
 
+		// Show cursor
+		void show_cursor() const;
 
-	// CLEAR AND COLOR //
-
-	// Clear the screen entirely
-	void clear_screen() const;
-
-	// Clear the line under the cursor
-	void clear_line(const uint16 x, const uint16 y) const;
-
-	// Set color for next draw
-	void set_color(const ANSIColor color) const;
-
-	// Set color for next draw
-	void set_bold(const ANSIColor color) const;
-
-	// Set color for next draw
-	void set_background(const ANSIBackground color) const;
-
-	// Reset the color for next draw
-	void reset_color() const;
-
-
-	// DRAWING //
-
-	// Wait for key without echoing
-	void waitkey() const;
-
-	// Wait for key without echoing and return it
-	uint8 getkey() const;
-
-	// Put a single char in some location
-	void putchar(const uint16 x, const uint16 y, const char ch);
-
-	// Put a list of chars in a row.
-	// This is not a HUD and characters are actually placed on buffer
-	void putchars(const uint16 x, const uint16 y, const char* chars);
-
-	// Get character in some location
-	char mvinch(const uint16 x, const uint16 y) const;
-
-	// Put a string in some location.
-	// This is like a HUD and the string is not placed on the buffer
-	void putstring(const uint16 x, const uint16 y, const char* message) const;
-
-	// Show a message in some location and wait for any key
-	void show_message(const uint16 x, const uint16 y, const char* message) const;
+		// Move cursor to some location on terminal.
+		// This is used before drawing something on a location
+		void move_cursor(const uint16 x, const uint16 y) const;
 
 
 
-	// Show a message at top that only hides if press space
-	void show_warning(const std::string& message) const;
+		// CLEAR AND COLOR //
+
+		// Clear the screen entirely
+		void clear_screen() const;
+
+		// Clear the line under the cursor
+		void clear_line(const uint16 x, const uint16 y) const;
+
+		// Set color for next draw
+		void set_color(const ANSIColor color) const;
+
+		// Set color for next draw
+		void set_bold(const ANSIColor color) const;
+
+		// Set color for next draw
+		void set_background(const ANSIBackground color) const;
+
+		// Reset the color for next draw
+		void reset_color() const;
+
+
+		// DRAWING //
+
+		// Wait for key without echoing
+		void waitkey() const;
+
+		// Wait for key without echoing and return it
+		uint8 getkey() const;
+
+		// Put a single char in some location
+		void putchar(const uint16 x, const uint16 y, const char ch);
+
+		// Put a list of chars in a row.
+		// This is not a HUD and characters are actually placed on buffer
+		void putchars(const uint16 x, const uint16 y, const char* chars);
+
+		// Get character in some location
+		char mvinch(const uint16 x, const uint16 y) const;
+
+		// Put a string in some location.
+		// This is like a HUD and the string is not placed on the buffer
+		void putstring(const uint16 x, const uint16 y, const char* message) const;
+
+		// Show a message in some location and wait for any key
+		void show_message(const uint16 x, const uint16 y, const char* message) const;
+
+
+
+		// Show a message at top that only hides if press space
+		void show_warning(const std::string& message) const;
 
 	private:
-		std::vector<std::vector<char>> term_buffer;
+		uint8* buffer; // Chars location
+		uint16 width;
+		uint16 height;
 };
 
 

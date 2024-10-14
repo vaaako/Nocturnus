@@ -2,10 +2,11 @@
 
 #include "nocturnus/terminal.hpp"
 #include "nocturnus/typedef.hpp"
+#include "nocturnus/vectors/vec2.hpp"
 #include <vector>
 
-enum Block : uint8 {
-	EMPTY = ' ',
+enum class Tile : uint8 {
+	EMPTY = '\0',
 	PLAYER = '@',
 
 	LRWALL = '|', // Left right wall
@@ -22,14 +23,17 @@ struct Room {
 	uint16 height;
 
 	// Maximum of 4 doors
-	// Default to fill later
-	vec2<uint16> doors[4];
+	vec2<uint16> doors[4] {
+		// Defaults
+		{ 0, 0 },
+		{ 0, 0 },
+		{ 0, 0 },
+		{ 0, 0 }
+	};
 };
 
-// Instead of one class for roguelike, make some namespaces
-// namespace pathfind {
-//
-// };
+
+// TODO -- On make_path, ignore other paths, currently is only checking for white spaces, if check for a path char, it will go around
 
 class Roguelike {
 	public:
@@ -52,6 +56,7 @@ class Roguelike {
 		// PATH MAKER //
 
 		// Try to make a path between two locations
+		// void make_path(const vec2<uint16>& start, const vec2<uint16>& target, const char pathchar = '#') const;
 		void make_path(const vec2<uint16>& start, const vec2<uint16>& target, const char pathchar = '#') const;
 
 		// Make a horizontal path between two locations.
