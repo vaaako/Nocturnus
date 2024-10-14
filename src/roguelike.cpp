@@ -1,4 +1,5 @@
 #include "nocturnus/roguelike.hpp"
+#include <algorithm>
 #include <cstdlib>
 #include <queue>
 #include <random>
@@ -93,25 +94,23 @@ void Roguelike::draw_rooms() {
 	vec2<uint16> door3 = second.doors[0];
 	vec2<uint16> door4 = third.doors[1];
 
-
+	// Calculate where is the front of each door
 	door1.x += 1;
 	door2.x -= 1;
 	door3.y -= 1;
 	door4.x += 1;
-
 	this->make_path(door1, door2);
 	this->make_path(door3, door4);
-	// this->make_path(door3, third.doors[0]);
 
-	// this->create_h_tunnel(first.doors[1].x, second.doors[3].x, first.doors[1].y);
-	// this->create_v_tunnel(second.doors[3].y, first.doors[1].y, second.doors[3].x);
+	// Could randomly choose which orientation to start
+	// this->make_h_path(door1.x, door2.x, door1.y);
+	// this->make_v_path(door2.y, door1.y, door2.x);
 	//
-	// this->create_h_tunnel(third.doors[1].x, second.doors[0].x, third.doors[1].y);
-	// this->create_v_tunnel(second.doors[0].y, third.doors[1].y, second.doors[0].x);
-
+	// this->make_h_path(door3.x, door4.x, door3.y);
+	// this->make_v_path(door4.y, door3.y, door4.x);
 }
 
-void Roguelike::make_path(const vec2<uint16>& start, const vec2<uint16>& target) const {
+void Roguelike::make_path(const vec2<uint16>& start, const vec2<uint16>& target, const char pathchar) const {
 	if(start == target) {
 		return;
 	}
@@ -126,33 +125,40 @@ void Roguelike::make_path(const vec2<uint16>& start, const vec2<uint16>& target)
 		// Path priority
 		vec2<int16>{ -1,  0 }, // Left
 		vec2<int16>{  1,  0 }, // Right
-		vec2<int16>{  0,  1 }, // Down
-		vec2<int16>{  0, -1 } // Up
+		vec2<int16>{  0, -1 }, // Up
+		vec2<int16>{  0,  1 }  // Down
 	};
 
+	// Randomize the direction priority
+	std::random_device rd;
+	std::mt19937 g(rd());
+	std::shuffle(directions.begin(), directions.end(), g); // Shuffle array
+
 	// First path in front of the door
-	this->terminal->putchar(pathpos.x, pathpos.y, '#');
+	this->terminal->putchar(pathpos.x, pathpos.y, pathchar);
 
 	// Start path
 	while(pathpos != target) {
 		bool moved = false;
 
+		// Check all directions
 		for(const vec2<int16>& dir : directions) {
 			vec2<uint16> newpos = {
 				static_cast<uint16>(pathpos.x + dir.x),
 				static_cast<uint16>(pathpos.y + dir.y)
 			};
 
-			// Check if newpos is empty
+			// Check if newpos is an empty space
 			if(this->terminal->mvinch(newpos.x, newpos.y) != ' ') {
 				continue;
 			}
 
-			// Check if moving is closer to the target
+			// Check newpos is closer to the target
 			if(std::abs(newpos.x - target.x) + std::abs(newpos.y - target.y)
 				< std::abs(pathpos.x - target.x) + std::abs(pathpos.y - target.y)) {
 
-				previous = pathpos;
+				// Move
+				previous = pathpos; // Store previous position for backtrack
 				pathpos = newpos;
 
 				moved = true;
@@ -164,37 +170,39 @@ void Roguelike::make_path(const vec2<uint16>& start, const vec2<uint16>& target)
 		if(!moved) {
 			// Try to backtrack
 			if(!backtrack) {
+				// Go back and try again
 				pathpos = previous;
 				backtrack = true;
 				continue;
 			}
 
-			// No possible path
+			// No possible direction
 			break;
 		}
 
 		// Draw the path
-		this->terminal->putchar(pathpos.x, pathpos.y, '#');
-		this->terminal->waitkey();
+		this->terminal->putchar(pathpos.x, pathpos.y, pathchar);
+		// this->terminal->waitkey(); // DEBUG
 	}
 
-	// reached target
+	// Reached target or no possible directions
 }
 
 
 
 
-void Roguelike::create_h_tunnel(int x1, int x2, int y) {
-	// Create the horizontal tunnel
+void Roguelike::make_h_path(const uint16 x1, const uint16 x2, const uint16 y, const char pathchar) const {
+	// min and amx are used in case x1 > x2
 	for (int x = std::min(x1, x2); x < std::max(x1, x2); ++x) {
-		this->terminal->putchar(x, y, '#');
+		this->terminal->putchar(x, y, pathchar);
 	}
 }
 
-void Roguelike::create_v_tunnel(int y1, int y2, int x) {
-	// Create the vertical tunnel
-	for (int y = std::min(y1, y2); y < std::max(y1, y2); ++y) {
-		this->terminal->putchar(x, y, '#');
+
+void Roguelike::make_v_path(const uint16 y1, const uint16 y2, const uint16 x, const char pathchar) const {
+	// +1 Go until reach the horizontal path (if have it)
+	for (int y = std::min(y1, y2); y < std::max(y1, y2) + 1; ++y) {
+		this->terminal->putchar(x, y, pathchar);
 	}
 }
 

@@ -35,6 +35,8 @@ class Roguelike {
 	public:
 		Roguelike(Terminal* terminal);
 
+		// ROOM MAKER //
+
 		// Make a room in coords and put on a vector of rooms.
 		// The width and height of a room is the size of the interior, not counting the walls, so a room 5x5 counting with the walls is actually 7x7
 		Room make_room(const uint16 x, const uint16 y, const uint16 width, const uint16 height);
@@ -47,18 +49,29 @@ class Roguelike {
 		// Don't use this method with draw_room, to avoid drawing the same rooom twice
 		void draw_rooms();
 
+		// PATH MAKER //
+
 		// Try to make a path between two locations
-		void make_path(const vec2<uint16>& start, const vec2<uint16>& target) const;
-		bool make_path_recursive(const vec2<uint16>& pathpos, const vec2<uint16>& target) const;
+		void make_path(const vec2<uint16>& start, const vec2<uint16>& target, const char pathchar = '#') const;
+
+		// Make a horizontal path between two locations.
+		// x1: Where to start.
+		// x2: Where to end.
+		// y:  Y of the path
+		void make_h_path(const uint16 x1, const uint16 x2, const uint16 y, const char pathchar = '#') const;
+		// Make a Vertical path between two locations
+		// y1: Where to start.
+		// y2: Where to end.
+		// x:  X of the path
+		void make_v_path(const uint16 y1, const uint16 y2, const uint16 x, const char pathchar = '#') const;
+
+
+		// UTILITY //
 
 		// Generate a random integer between two numbers
 		int randint(const int min, const int max);
-
 		// Generate a random integer between 0 and a number
 		int randint(const int max);
-
-		void create_h_tunnel(int x1, int x2, int y);
-		void create_v_tunnel(int y1, int y2, int x);
 
 	private:
 		Terminal* terminal;
